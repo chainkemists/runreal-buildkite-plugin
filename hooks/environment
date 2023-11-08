@@ -17,11 +17,26 @@ plugin_read_config() {
     echo "${!var:-$default}"
 }
 
+check_installed_version() {
+    if command -v runreal >/dev/null 2>&1; then
+        local installed_version=$(runreal --version | sed 's/\x1b\[[0-9;]*m//g' | awk '{print $2}')
+        echo "${installed_version}"
+    else
+        echo ""
+    fi
+}
+
+get_latest_version() {
+    curl --silent "https://api.github.com/repos/chainkemists/runreal/releases/latest" | 
+    grep '"tag_name":' | 
+    sed -E 's/.*"([^"]+)".*/\1/' |
+    cut -c 2-
+}
+
 download_runreal() {
     local platform
     local bin
     local version=$(plugin_read_config "VERSION" "latest")
-    local url
     case "$(uname -s)" in
         Darwin)
             platform="mac"
@@ -44,14 +59,21 @@ download_runreal() {
             ;;
     esac
 
+    echo "--- Installing runreal-${version} for ${platform}"
     if [[ "${version}" == "latest" ]]; then
-        url="${BASE_URL}/latest/download/${bin}"
-    else
-        url="${BASE_URL}/download/v${version}/${bin}"
+        version=$(get_latest_version)
     fi
+
+    local installed_version=$(check_installed_version)
+    if [[ "${installed_version}" == "${version}" ]]; then
+        echo "runreal-${version} is already installed, skipping download."
+        return
+    fi
+
+    local url="${BASE_URL}/download/v${version}/${bin}"
     local output_path="$BIN_DIR/${save_as}"
 
-    echo "--- Downloading runreal-${version} for ${platform} from ${url}"
+    echo "--- Downloading from ${url}"
     mkdir -p "$BIN_DIR"
     curl -L -o "${output_path}" "${url}"
     chmod +x "${output_path}"
@@ -68,6 +90,6 @@ test_runreal() {
     runreal --help
 }
 
-download_runreal
 make_available
+download_runreal
 test_runreal

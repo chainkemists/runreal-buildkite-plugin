@@ -11,7 +11,7 @@ setup() {
   stub curl
   run "$PWD/hooks/environment"
 
-  assert_output --partial "--- Downloading runreal-latest"
+  assert_output --partial "--- Installing runreal-latest"
 }
 
 @test "sets the plugin version correctly" {
@@ -20,7 +20,7 @@ setup() {
   stub curl
   run "$PWD/hooks/environment"
 
-  assert_output --partial "--- Downloading runreal-1.0.0"
+  assert_output --partial "--- Installing runreal-1.0.0"
 }
 
 @test "uses correct url for windows platform" {
