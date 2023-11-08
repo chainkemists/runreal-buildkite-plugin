@@ -1,0 +1,10 @@
+services:
+  lint:
+    image: buildkite/plugin-linter:v2.0.2
+    command: ['--id','chainkemists/runreal']
+    volumes:
+      - ".:/plugin"
+  tests:
+    image: buildkite/plugin-tester:v4.0.0
+    volumes:
+      - ".:/plugin"

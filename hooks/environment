@@ -1,0 +1,73 @@
+#!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+BIN_DIR="$SCRIPT_DIR/../bin"
+
+# https://github.com/chainkemists/runreal/releases/download/v1.0.0/runreal-win-x64.exe
+# https://github.com/chainkemists/runreal/releases/latest/download/runreal-win-x64.exe
+BASE_URL="https://github.com/chainkemists/runreal/releases"
+WINDOWS_BIN="runreal-win-x64.exe"
+LINUX_BIN="runreal-linux-x64"
+MAC_BIN="runreal-macos-arm"
+
+plugin_read_config() {
+    local var="BUILDKITE_PLUGIN_RUNREAL_${1}"
+    local default="${2:-}"
+    echo "${!var:-$default}"
+}
+
+download_runreal() {
+    local platform
+    local bin
+    local version="latest"
+    local url
+    case "$(uname -s)" in
+        Darwin)
+            platform="mac"
+            save_as="runreal"
+            bin="${MAC_BIN}"
+            ;;
+        Linux)
+            platform="linux"
+            save_as="runreal"
+            bin="${LINUX_BIN}"
+            ;;
+        CYGWIN*|MINGW32*|MSYS*|MINGW*)
+            platform="win"
+            save_as="runreal.exe"
+            bin="${WINDOWS_BIN}"
+            ;;
+        *)
+            echo "unknown: $(uname -s)"
+            exit 1
+            ;;
+    esac
+
+    if [[ "${version}" == "latest" ]]; then
+        url="${BASE_URL}/latest/download/${bin}"
+    else
+        url="${BASE_URL}/download/v${version}/${bin}"
+    fi
+    local output_path="$BIN_DIR/${save_as}"
+
+    echo "--- Downloading runreal for ${platform} from ${url}"
+    mkdir -p "$BIN_DIR"
+    curl -L -o "${output_path}" "${url}"
+    chmod +x "${output_path}"
+}
+
+make_available() {
+    echo "--- Adding ${BIN_DIR} to PATH"
+    export PATH="${PATH}:${BIN_DIR}"
+}
+
+test_runreal() {
+    echo "--- Testing runreal"
+    runreal --version
+    runreal --help
+}
+
+download_runreal
+make_available
+test_runreal
