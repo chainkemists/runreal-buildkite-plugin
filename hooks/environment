@@ -20,7 +20,7 @@ plugin_read_config() {
 download_runreal() {
     local platform
     local bin
-    local version="latest"
+    local version=$(plugin_read_config "VERSION" "latest")
     local url
     case "$(uname -s)" in
         Darwin)
@@ -51,7 +51,7 @@ download_runreal() {
     fi
     local output_path="$BIN_DIR/${save_as}"
 
-    echo "--- Downloading runreal for ${platform} from ${url}"
+    echo "--- Downloading runreal-${version} for ${platform} from ${url}"
     mkdir -p "$BIN_DIR"
     curl -L -o "${output_path}" "${url}"
     chmod +x "${output_path}"
